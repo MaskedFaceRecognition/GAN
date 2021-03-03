@@ -1,0 +1,11 @@
+tensorflow
+tensorflow-addons
+tensorflow-hub
+scipy
+numpy
+pillow
+matplotlib
+foolbox==2.4.0
+jupyter
+imageio
+scikit-image
