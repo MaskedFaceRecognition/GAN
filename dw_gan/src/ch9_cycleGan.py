@@ -16,7 +16,7 @@ import os
 import ch9_dataLoader
 
 # 오랜지를 사과로 바꾸기 등
-#  
+
 class CycleGAN():
     def __init__(self):
         # 입력 크기
