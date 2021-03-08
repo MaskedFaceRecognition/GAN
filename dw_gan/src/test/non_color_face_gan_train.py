@@ -23,16 +23,12 @@ z_dim = 100
 def build_generator(img_shape, z_dim):
 
     model = Sequential()
-
     # 완전 연결층
     model.add(Dense(128, input_dim=z_dim))
-
     # LeakyReLU 활성화 함수
     model.add(LeakyReLU(alpha=0.01))
-
     # tanh 활성화 함수를 사용한 출력층
     model.add(Dense(200 * 200 * 1, activation='tanh'))
-
     # 생성자의 출력을 이미지 차원으로 변경
     model.add(Reshape(img_shape))
 
@@ -41,19 +37,14 @@ def build_generator(img_shape, z_dim):
 def build_discriminator(img_shape):
 
     model = Sequential()
-
     # 입력 이미지를 일렬로 펼치기
     model.add(Flatten(input_shape=img_shape))
-
     # 완전 연결층
     model.add(Dense(128))
-
     # LeakyReLU 활성화 함수
     model.add(LeakyReLU(alpha=0.01))
-
     # 시그모이드 활성화 함수를 사용한 출력층
     model.add(Dense(1, activation='sigmoid'))
-
     return model
 
 def build_gan(generator, discriminator):
@@ -86,7 +77,7 @@ losses = []
 accuracies = []
 iteration_checkpoints = []
 
-data_path = 'color_faces/'
+data_path = 'faces/'
 onlyfiles = [f for f in listdir(data_path) if isfile(join(data_path, f))]
 Training_Data, Labels = [], []
 
@@ -100,7 +91,7 @@ def train(iterations, batch_size, sample_interval):
     # MNIST 데이터셋 로드
     X_train = np.asarray(Training_Data)
     # X_train
-    print(f'X_train asarray : {X_train}')
+    #print(f'X_train asarray : {X_train}')
     # [0, 255] 흑백 픽셀 값을 [-1, 1] 사이로 스케일 조정
     X_train = X_train / 127.5 - 1.0
     X_train = np.expand_dims(X_train, axis=3)

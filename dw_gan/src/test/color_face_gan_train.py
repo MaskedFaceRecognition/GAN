@@ -23,16 +23,12 @@ z_dim = 100
 def build_generator(img_shape, z_dim):
 
     model = Sequential()
-
     # 완전 연결층
     model.add(Dense(128, input_dim=z_dim))
-
     # LeakyReLU 활성화 함수
     model.add(LeakyReLU(alpha=0.01))
-
     # tanh 활성화 함수를 사용한 출력층
     model.add(Dense(200 * 200 * 3, activation='tanh'))
-
     # 생성자의 출력을 이미지 차원으로 변경
     model.add(Reshape(img_shape))
 
@@ -41,25 +37,19 @@ def build_generator(img_shape, z_dim):
 def build_discriminator(img_shape):
 
     model = Sequential()
-
     # 입력 이미지를 일렬로 펼치기
     model.add(Flatten(input_shape=img_shape))
-
     # 완전 연결층
     model.add(Dense(128))
-
     # LeakyReLU 활성화 함수
     model.add(LeakyReLU(alpha=0.01))
-
     # 시그모이드 활성화 함수를 사용한 출력층
     model.add(Dense(1, activation='sigmoid'))
-
     return model
 
 def build_gan(generator, discriminator):
 
     model = Sequential()
-
     # 생성자 -> 판별자로 연결된 모델
     model.add(generator)
     model.add(discriminator)
@@ -147,11 +137,9 @@ def train(iterations, batch_size, sample_interval):
             losses.append((d_loss, g_loss))
             accuracies.append(100.0 * accuracy)
             iteration_checkpoints.append(iteration + 1)
-
             # 훈련 과정 출력
             print("%d [D 손실: %f, 정확도: %.2f%%] [G 손실: %f]" %
                   (iteration + 1, d_loss, 100.0 * accuracy, g_loss))
-
             # 생성된 이미지 샘플 출력
             sample_images(generator)
 
