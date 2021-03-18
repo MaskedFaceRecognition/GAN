@@ -157,11 +157,9 @@ def inputedImageData(flag):
         return mnist.load_data()
 
 
-
-
 def train(iterations, batch_size, sample_interval):
 
-    # MNIST 데이터셋 로드
+    # 데이터셋 로드
     
     (X_train,Labels),(_,_) = inputedImageData(1)
 
