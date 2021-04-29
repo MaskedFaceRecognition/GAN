@@ -1,0 +1,299 @@
+## 1. 해야할 것 과 오늘 한 것
+
+1. **object detection 모델 분석하기 : 30 %
+2. get points 분석하기 100%
+3. object detection 의 입력형과 get points  입력형 맞추기 0 % (모델 분석하고 해야함)
+    - *이것만 해결하면 제대로된 결과를 낼 수 있음. 하지만 최소 4 + a 시간 걸릴 것으로 예상.
+4. GAN 모델 오류 해결(shape error)  80% -> 이게 위의 object detection과 
+    - 감정 분류 -> GAN 학습 shape 맞추기 0% (안 건드림)
+5. **gan 모델 성능 평가하기 0% (안 건드림)**
+6. **object detection 모델 성능 평가하기 0% (안 건드림)**
+    - **object detection은 IoU를 사용하기 Area of Overlap / Area of Union**
+
+## 2. 진행 상황 :
+
+mask_image(x_batch) 함수를 get_points() 함수로 형으로 바꿔야한다.
+get_points()의 return 은
+
+```
+return np.array(points), np.array(mask)
+
+```
+
+이고
+
+이것의 형이
+
+```
+np.array(points.shape) :(16, 4), np.array(mask).shape :(16, 128, 128, 1)
+
+```
+
+이다.
+
+```
+points_batch, mask_batch = get_points()
+
+```
+
+위를 에서 받아서
+
+```
+_, g_loss, completion = sess.run([g_train_op, model.g_loss, model.completion], feed_dict={x: x_batch, mask: mask_batch, is_training: True})
+
+```
+
+위 함수의 입력값으로 넣어줘야 한다.
+
+당장 해야할 것이 get_points 함수를 뜯어보는 것이다.
+
+get_points 함수는
+
+```
+    while True:
+        if sess.run(epoch) <= PRETRAIN_EPOCH:
+            for i in tqdm.tqdm(range(step_num)):
+                x_batch = x_train[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
+                points_batch, mask_batch = get_points()
+
+```
+
+위에서 while문 안의 step_num만큼 도는데 step_num은 x_train의 개수를 batch_size로 나눈 것이다.
+여기서 batch_size는 16이다.
+
+```
+step_num = int(len(x_train) / BATCH_SIZE)
+
+```
+
+```
+ def get_points():
+    points = []
+    mask = []
+    for _ in range(BATCH_SIZE):
+        x1, y1 = np.random.randint(0, IMAGE_SIZE - LOCAL_SIZE + 1, 2)
+        x2, y2 = np.array([x1, y1]) + LOCAL_SIZE
+
+        points.append([x1, y1, x2, y2])
+
+        w, h = np.random.randint(HOLE_MIN, HOLE_MAX + 1, 2)
+        p1 = x1 + np.random.randint(0, LOCAL_SIZE - w)
+        q1 = y1 + np.random.randint(0, LOCAL_SIZE - h)
+        p2 = p1 + w
+        q2 = q1 + h
+
+        m = np.zeros((IMAGE_SIZE, IMAGE_SIZE, 1), dtype=np.uint8)
+        m[q1:q2 + 1, p1:p2 + 1] = 1
+        mask.append(m)
+        print()
+    print("#################")
+    #print(f"np.array(points) :{np.array(points)}, np.array(mask) :{np.array(mask)} ")
+    print(f"np.array(points.shape) :{np.array(points).shape}, np.array(mask).shape :{np.array(mask).shape} ")
+    return np.array(points), np.array(mask)
+
+```
+
+## 3. 더 해야할 것 :
+
+## 1. 해야할 것
+
+**gan 모델 성능 평가하기**
+
+**object detection 모델 성능 평가하기**
+
+**object detection은 IoU를 사용하기 Area of Overlap / Area of Union**
+
+## 2. 진행 상황 :
+
+mask_image(x_batch) 함수를 get_points() 함수로 형으로 바꿔야한다.
+get_points()의 return 은
+
+```
+return np.array(points), np.array(mask)
+
+```
+
+이고
+
+이것의 형이
+
+```
+np.array(points.shape) :(16, 4), np.array(mask).shape :(16, 128, 128, 1)
+
+```
+
+이다.
+
+```
+points_batch, mask_batch = get_points()
+
+```
+
+위를 에서 받아서
+
+```
+_, g_loss, completion = sess.run([g_train_op, model.g_loss, model.completion], feed_dict={x: x_batch, mask: mask_batch, is_training: True})
+
+```
+
+위 함수의 입력값으로 넣어줘야 한다.
+
+당장 해야할 것이 get_points 함수를 뜯어보는 것이다.
+
+```
+step_num = int(len(x_train) / BATCH_SIZE)
+
+```
+
+get_points 함수는
+
+```
+    while True:
+        if sess.run(epoch) <= PRETRAIN_EPOCH:
+            for i in tqdm.tqdm(range(step_num)):
+                x_batch = x_train[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
+                points_batch, mask_batch = get_points()
+```
+
+위에서 while문 안의 step_num만큼 도는데 <strong>step_num</strong>은 x_train의 개수를 batch_size로 나눈 것이다.
+여기서 batch_size는 16이다.
+
+```
+ def get_points():
+    points = []
+    mask = []
+    for _ in range(BATCH_SIZE):
+        x1, y1 = np.random.randint(0, IMAGE_SIZE - LOCAL_SIZE + 1, 2)
+        x2, y2 = np.array([x1, y1]) + LOCAL_SIZE
+
+        points.append([x1, y1, x2, y2])
+
+        w, h = np.random.randint(HOLE_MIN, HOLE_MAX + 1, 2)
+        p1 = x1 + np.random.randint(0, LOCAL_SIZE - w)
+        q1 = y1 + np.random.randint(0, LOCAL_SIZE - h)
+        p2 = p1 + w
+        q2 = q1 + h
+
+        m = np.zeros((IMAGE_SIZE, IMAGE_SIZE, 1), dtype=np.uint8)
+        m[q1:q2 + 1, p1:p2 + 1] = 1
+        mask.append(m)
+        print()
+    print("#################")
+    #print(f"np.array(points) :{np.array(points)}, np.array(mask) :{np.array(mask)} ")
+    print(f"np.array(points.shape) :{np.array(points).shape}, np.array(mask).shape :{np.array(mask).shape} ")
+    return np.array(points), np.array(mask)
+
+```
+
+get_points를 뜯어보면 points를 저장하는 배열과 mask를 저장하는 배열이 선언되고 points에 [x1,y1,x2,y2]가 16번 저장되는데, 실제로 아래와 같이 저장된다. 이게 랜덤으로 생성되는네모 상자를 좌표를 뜻한다. 위 x1, y1, x2, y2를 mask objection으로 찾은 영역으로 대체해줘야 한다. 
+
+한가지 문제인 것은 이미지를 받아오는 것이다.
+
+```python
+points_batch : [[  5  62  69 126]
+ [ 54   4 118  68]
+ [ 15  45  79 109]
+ [ 13  45  77 109]
+ [ 59  43 123 107]
+ [ 26  64  90 128]
+ [ 40  49 104 113]
+ [  5  29  69  93]
+ [ 47  45 111 109]
+ [  3  45  67 109]
+ [ 15  40  79 104]
+ [ 34  27  98  91]
+ [ 11  37  75 101]
+ [ 35   3  99  67]
+ [ 11  48  75 112]
+ [ 50  25 114  89]], mask_batch : [[[[0]
+```
+
+gan 모델의 크기는 128 * 128 사이즈 이므로 detection하는 것도 128 * 128로 통일해줘야 한다.
+
+# 더 추가할 예정
+
+아래는 mask_image이다 여기 args를 받아오는데 이것을 get_points 와 같이 batch로 받아와야 한다
+
+```python
+def mask_image():
+
+	### args에서 image만 받아오면
+	args = {'image': 'images/pic1.jpeg', 'face': 'face_detector', 'model': 'mask_detector.model', 'confidence': 0.5}
+	print(f'args : {args}') ###
+
+	# load our serialized face detector model from disk
+	print("[INFO] loading face detector model...")
+	prototxtPath = os.path.sep.join([args["face"], "deploy.prototxt"])
+	weightsPath = os.path.sep.join([args["face"],
+		"res10_300x300_ssd_iter_140000.caffemodel"])
+	net = cv2.dnn.readNet(prototxtPath, weightsPath)
+
+	# load the face mask detector model from disk
+	print("[INFO] loading face mask detector model...")
+	model = load_model(args["model"])
+
+	# load the input image from disk, clone it, and grab the image spatial
+	# dimensions
+	image = cv2.imread(args["image"])
+	orig = image.copy()
+	(h, w) = image.shape[:2]
+
+	# construct a blob from the image
+	blob = cv2.dnn.blobFromImage(image, 1.0, (300, 300),
+		(104.0, 177.0, 123.0))
+
+	# pass the blob through the network and obtain the face detections
+	print("[INFO] computing face detections...")
+	net.setInput(blob)
+	detections = net.forward()
+
+	# loop over the detections
+	for i in range(0, detections.shape[2]):
+		# extract the confidence (i.e., probability) associated with
+		# the detection
+		confidence = detections[0, 0, i, 2]
+
+		# filter out weak detections by ensuring the confidence is
+		# greater than the minimum confidence
+		if confidence > args["confidence"]:
+			# compute the (x, y)-coordinates of the bounding box for
+			# the object
+			box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+			(startX, startY, endX, endY) = box.astype("int")
+
+			# ensure the bounding boxes fall within the dimensions of
+			# the frame
+			(startX, startY) = (max(0, startX), max(0, startY))
+			(endX, endY) = (min(w - 1, endX), min(h - 1, endY))
+
+			# extract the face ROI, convert it from BGR to RGB channel
+			# ordering, resize it to 224x224, and preprocess it
+			face = image[startY:endY, startX:endX]
+			face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+			face = cv2.resize(face, (224, 224))
+			face = img_to_array(face)
+			face = preprocess_input(face)
+			face = np.expand_dims(face, axis=0)
+
+			# pass the face through the model to determine if the face
+			# has a mask or not
+			(mask, withoutMask) = model.predict(face)[0]
+
+			# determine the class label and color we'll use to draw
+			# the bounding box and text
+			label = "Mask" if mask > withoutMask else "No Mask"
+			color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
+
+			# include the probability in the label
+			label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
+
+			# display the label and bounding box rectangle on the output
+			# frame
+			cv2.putText(image, label, (startX, startY - 10),
+				cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+			cv2.rectangle(image, (startX, (startY+endY)*19//40), ((endX+10), endY+10), color, 2)
+
+	return image, (startX, (startY+endY)*19//40), (endX+10), endY+10
+```
+
+## 3. 더 해야할 것 :
