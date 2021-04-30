@@ -1,0 +1,108 @@
+## 1. 해야할 것 과 오늘 한 것
+
+저번내용 미비한 것
+
+```
+- object detection 모델 분석하기  30%  →
+- object detection 의 입력형과 get points  입력형 맞추기  0%
+    - *이것만 해결하면 제대로된 결과를 낼 수 있음. 하지만 이 부분이 어려움
+- GAN 모델 오류 해결(shape error)  80%
+    - 감정 분류 -> GAN 학습 shape 맞추기 0%
+- gan 모델 성능 평가하기 0% (안 건드림)
+- object detection 모델 성능 평가하기 0% (안 건드림)
+    - object detection은 IoU를 사용하기 Area of Overlap / Area of Union**
+```
+
+오늘 추가로 해야할 것
+
+- train 파일에서 batch 파일을 어떻게 사용하는 지 분석하기 80 %
+- mask_image()에서 일반 image 말고 batch 파일을 받아서 사용하게 만들기 0 %
+
+## 2. 진행 상황 :
+
+원래 gan 모델에서는 이미지 파일의 batch 파일로 만들어서 동작시키지만 mask_image에서는 로컬에 있는 이미지 파일을 그대로 사용한다. mask_image의 이미지 파일을 to_num_2.py를 사용해서 numpy파일로 바꾸고 이 바꾼 내용을 사용할 수 있게 바꿔주는 동작이 필요하다. 그럼 train 파일의 도입부에서의 batch 파일을 어떻게 사용하는 지 분석해야 하고, 이를 토대로 mask_image 함수를 바꿔줘야 한다.
+
+- train 파일에서 batch 파일을 어떻게 사용하는 지 분석하기
+
+변수부터 살펴보자. tensorflow 1에서는 변수를 placeholder에 저장해야 한다.
+
+**placeholder는 좌항에 저장할 데이터 형을 지정해주고 실제 학습 데이터를 집어넣는데 사용된다.**
+
+```python
+x = tf.compat.v1.placeholder(tf.float32, [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3])
+```
+
+x는 float32 형으로 받고 형식은 [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3]) 이다.
+
+그냥 자료형을 어떤 것으로 쓸 것인지 명시해놓은 것이다.
+
+- tensorflow 1 변수, 함수
+
+    x, mask, local_x, global_completion, local_completion, is_training을 사용했다.
+
+    그리고 network에서 Network를 사용해서 model에 저장한다.
+    자료형을 저장하는 방식 중 tf.Variable도 사용한다.
+
+    tf.Variable
+    **tf.Variable은 우리의 모델에서 Weight나 Bias 같은 훈련 가능한 변수를 위해 사용된다.**
+
+    여기서는 global_step과 epoch에 사용되었다.
+    opt = tf.compat.v1.train.AdamOptimizer(learning_rate=LEARNING_RATE)
+
+    Adam 알고리즘을 사용해서 optimize 했다.
+    cost function을 minimize한다.
+
+```python
+x_train, x_test = load.load()
+    x_train = np.array([a / 127.5 - 1 for a in x_train])
+    x_test = np.array([a / 127.5 - 1 for a in x_test])
+```
+
+위에서 load를 통해 x_train과 x_test를 저장하고 np.array형으로 만든다. 
+
+여기서 x_train과 x_test를 확인해보자.
+
+![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5bd0b4cf-c185-47eb-88ef-e720b58907b8/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5bd0b4cf-c185-47eb-88ef-e720b58907b8/Untitled.png)
+
+```python
+x_train.shape : (200, 128, 128, 3), x_test.shape : (95, 128, 128, 3)
+```
+
+x_train은 200장을 x_test는 95장을 묶었다.
+
+```python
+x_batch = x_train[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
+```
+
+x_batch는 위와 같은 식으로 정의되는데 뭔 값인지 알기 위해 보면 원래 위에서 정의했던 batch_size만큼씩 자른 것이다
+
+```python
+batch.shape : (16, 128, 128, 3)
+```
+
+위와 같이 나온다.
+
+그리고 학습 시키는 것을
+
+```python
+_, g_loss = sess.run([g_train_op, model.g_loss], feed_dict={x: x_batch, mask: mask_batch, is_training: True})
+```
+
+위에서 하는데,sess.run의 feed_dict에 사용하는 x : x_batch가 x에 x_batch를 넣은 값이라는 뜻이다. 앞에서 placeholder로 선언 한 것을 sess.run의 변수로 사용하기 위해 위 코드와 같이 사용한다.
+
+그리고 돌아가지 않은 코드가
+
+```python
+
+            x_batch = x_test[:BATCH_SIZE]
+            print(f'yes?')
+            ###########
+            ### 여기 다음이 돌아가지 않는다. feed dict를 설정해야 한다. x batch 자체가 이상한듯?
+            #print(f'x :{x}, mask : {mask}')
+            completion = sess.run(model.completion, feed_dict={x: x_batch, mask: mask_batch, is_training: False})
+            ###########
+```
+
+### 위 부분인데 지금 보니 x_batch에 x_test를 저장하는데 이게 잘못되지 않았나 싶다어 바르게 수정해야 할 듯하다.
+
+## 3. 추가된 해야할 것 :
